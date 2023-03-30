@@ -63,7 +63,6 @@ def blend_images(images):
 
 class Script(scripts.Script):
     def __init__(self):
-        #self.frame2frame_dir = tempfile.TemporaryDirectory()
         self.gif_mode = False
         self.active_file = None
         self.audio_codec = None
