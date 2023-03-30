@@ -94,7 +94,8 @@ class Script(scripts.Script):
         with gr.Row():
                 with gr.Box():
                     with gr.Column():
-                        upload_anim = gr.File(label="Upload Animation", file_types = types_all, live=True, file_count = "single")
+                        # upload_anim = gr.File(label="Upload Animation", file_types = types_all, live=True, file_count = "single")
+                        upload_anim = gr.Text(label="File Path:")
                         preview_gif = gr.Image(inputs = upload_anim, visible=False, Source="Upload", interactive=True, label = "Preview", type= "filepath")
                         preview_vid = gr.Video(inputs = upload_anim, visible=False, Source="Upload", interactive=True, label = "Preview", type= "filepath")
                 with gr.Column():
@@ -118,17 +119,17 @@ class Script(scripts.Script):
                                     anim_runtime = gr.Number(value=0, interactive = False, label = "Original runtime")
                                     anim_frames = gr.Number(value=0, interactive = False, label = "Original total frames")
 
-        #Control funcs
-        def process_upload(file, fps_factor):
-            if file == None:
+
+        def process_upload(file_path, fps_factor):
+            if file_path is None:
                 return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
             
             #Handle gif upload
-            elif any(substring in file.name for substring in types_gif):
+            elif any(substring in file_path for substring in types_gif):
                 try:
-                    self.active_file = file.name
+                    self.active_file = file_path
                     #Collect and set info
-                    pimg = Image.open(file.name)
+                    pimg = Image.open(file_path)
                     self.orig_width = pimg.width
                     self.orig_height = pimg.height
                     self.orig_gif_dur = pimg.info["duration"]
@@ -136,18 +137,18 @@ class Script(scripts.Script):
                     self.orig_num_frames = pimg.n_frames
                     self.orig_fps = round((1000 / self.orig_gif_dur), 2)
                     self.gif_mode = True
-                    return file.name, file.name, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(value=file.name, visible=True), gr.Video.update(visible=False), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
+                    return file_path, file_path, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(value=file_path, visible=True), gr.Video.update(visible=False), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
                 except:
-                    print(f"Trouble loading GIF/WEBP file {file.name}")
+                    print(f"Trouble loading GIF/WEBP file {file_path}")
                     self.active_file = None
                     return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0 ,0, 0, 0
             
             #Handle video upload
-            elif any(substring in file.name for substring in types_vid):
+            elif any(substring in file_path for substring in types_vid):
                 try:
-                    self.active_file = file.name
+                    self.active_file = file_path
                     #Collect and set info
-                    vstream = cv2.VideoCapture(file.name)
+                    vstream = cv2.VideoCapture(file_path)
                     fourcc = int(vstream.get(cv2.CAP_PROP_FOURCC))
                     self.fourcc = fourcc
                     self.orig_fps = int(vstream.get(cv2.CAP_PROP_FPS))
@@ -163,17 +164,71 @@ class Script(scripts.Script):
                         pimg = Image.fromarray(cimg).convert("RGB")
                         self.gif_mode = False
                         vstream.release()
-                        return pimg, pimg, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(visible=False), gr.Video.update(value=file.name, visible=True), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
+                        return pimg, pimg, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(visible=False), gr.Video.update(value=file_path, visible=True), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
                     else: vstream.release()
                 except:
-                    print(f"Trouble loading video file {file.name}")
+                    print(f"Trouble loading video file {file_path}")
                     self.active_file = None
-                    return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
+                  
+
+
+
+        #Control funcs
+        # def process_upload(file, fps_factor):
+        #     if file == None:
+        #         return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
             
-            #Handle other filetypes?
-            else:
-                print(f"Unrecognized filetype. Accepted filetypes: {types_all}")
-                return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
+        #     #Handle gif upload
+        #     elif any(substring in file.name for substring in types_gif):
+        #         try:
+        #             self.active_file = file.name
+        #             #Collect and set info
+        #             pimg = Image.open(file.name)
+        #             self.orig_width = pimg.width
+        #             self.orig_height = pimg.height
+        #             self.orig_gif_dur = pimg.info["duration"]
+        #             self.desired_gif_dur = self.orig_gif_dur
+        #             self.orig_num_frames = pimg.n_frames
+        #             self.orig_fps = round((1000 / self.orig_gif_dur), 2)
+        #             self.gif_mode = True
+        #             return file.name, file.name, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(value=file.name, visible=True), gr.Video.update(visible=False), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
+        #         except:
+        #             print(f"Trouble loading GIF/WEBP file {file.name}")
+        #             self.active_file = None
+        #             return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0 ,0, 0, 0
+            
+        #     #Handle video upload
+        #     elif any(substring in file.name for substring in types_vid):
+        #         try:
+        #             self.active_file = file.name
+        #             #Collect and set info
+        #             vstream = cv2.VideoCapture(file.name)
+        #             fourcc = int(vstream.get(cv2.CAP_PROP_FOURCC))
+        #             self.fourcc = fourcc
+        #             self.orig_fps = int(vstream.get(cv2.CAP_PROP_FPS))
+        #             self.orig_num_frames = int(vstream.get(cv2.CAP_PROP_FRAME_COUNT))
+        #             self.orig_runtime = self.orig_num_frames / self.orig_fps
+        #             self.orig_width = int(vstream.get(cv2.CAP_PROP_FRAME_WIDTH))
+        #             self.orig_height = int(vstream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        #             self.video_codec = chr(fourcc & 0xFF) + chr((fourcc >> 8) & 0xFF) + chr((fourcc >> 16) & 0xFF) + chr((fourcc >> 24) & 0xFF)
+        #             self.audio_codec = int(vstream.get(cv2.CAP_PROP_FOURCC)) >> 16
+        #             success, frame = vstream.read()
+        #             if success:
+        #                 cimg = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #                 pimg = Image.fromarray(cimg).convert("RGB")
+        #                 self.gif_mode = False
+        #                 vstream.release()
+        #                 return pimg, pimg, cl8(pimg.width), cl8(pimg.height), gr.File.update(visible=False), gr.Image.update(visible=False), gr.Video.update(value=file.name, visible=True), self.orig_fps, self.orig_runtime, self.orig_num_frames, round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
+        #             else: vstream.release()
+        #         except:
+        #             print(f"Trouble loading video file {file.name}")
+        #             self.active_file = None
+        #             return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
+            
+        #     #Handle other filetypes?
+        #     else:
+        #         print(f"Unrecognized filetype. Accepted filetypes: {types_all}")
+        #         return None, None, gr.Slider.update(), gr.Slider.update(), gr.File.update(value=None, visible=True), gr.Image.update(visible=False), gr.Video.update(visible=False), 0, 0, 0, 0, 0
         
         #Listeners
         def clear_anim(anim):
@@ -192,7 +247,7 @@ class Script(scripts.Script):
                     self.desired_gif_dur = self.orig_gif_dur/fps_factor
                 return round(self.orig_fps*fps_factor, 2), round(self.orig_num_frames*fps_factor)
 
-        upload_anim.upload(fn=process_upload, inputs=[upload_anim, desired_fps_slider], outputs=[self.img2img_component, self.img2img_inpaint_component, self.img2img_w_slider, self.img2img_h_slider,  upload_anim, preview_gif, preview_vid, anim_fps, anim_runtime, anim_frames, desired_fps, desired_frames])
+        upload_anim.change(fn=process_upload, inputs=[upload_anim, desired_fps_slider], outputs=[self.img2img_component, self.img2img_inpaint_component, self.img2img_w_slider, self.img2img_h_slider,  upload_anim, preview_gif, preview_vid, anim_fps, anim_runtime, anim_frames, desired_fps, desired_frames])
         preview_gif.change(fn=clear_anim, inputs=preview_gif, outputs=[self.img2img_component, self.img2img_inpaint_component, upload_anim, preview_gif, preview_vid, anim_fps, anim_runtime, anim_frames, desired_fps, desired_frames])
         preview_vid.change(fn=clear_anim, inputs=preview_vid, outputs=[self.img2img_component, self.img2img_inpaint_component, upload_anim, preview_gif, preview_vid, anim_fps, anim_runtime, anim_frames, desired_fps, desired_frames])
         recalc_button.click(fn=updatefps, inputs=[desired_fps_slider], outputs=[desired_fps, desired_frames])
@@ -236,7 +291,7 @@ class Script(scripts.Script):
             else:
                 framedir = tempfile.TemporaryDirectory()
                 soundtrack_file = f"{framedir.name}/soundtrack.mp3"
-                inc_clip_raw = VideoFileClip(upload_anim.name)
+                inc_clip_raw = VideoFileClip(upload_anim)
                 if inc_clip_raw.audio != None: #Save the audio if exists
                     inc_clip_raw.audio.write_audiofile(soundtrack_file)
                 inc_clip = inc_clip_raw.set_fps(desired_fps)
